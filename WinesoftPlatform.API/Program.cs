@@ -11,6 +11,7 @@ using WinesoftPlatform.API.Inventory.Domain.Services;
 using WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 using WinesoftPlatform.API.Inventory.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
+using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +23,6 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader());
 });
 
-// Add services to the container
 builder.Services.AddControllers(options =>
     options.Conventions.Add(new KebabCaseRouteNamingConvention()));
 
@@ -30,7 +30,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options => options.EnableAnnotations());
 builder.Services.AddOpenApi();
 
-// Add Database Connection
 if (builder.Environment.IsDevelopment())
     builder.Services.AddDbContext<AppDbContext>(options => {
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -50,43 +49,36 @@ else if (builder.Environment.IsProduction())
             .Build();
         var connectionStringTemplate = configuration.GetConnectionString("DefaultConnection");
         if (string.IsNullOrEmpty(connectionStringTemplate)) 
-            // Stop the application if the connection string template is not set.
             throw new Exception("Database connection string template is not set in the configuration.");
         var connectionString = Environment.ExpandEnvironmentVariables(connectionStringTemplate);
         if (string.IsNullOrEmpty(connectionString))
-            // Stop the application if the connection string is not set.
             throw new Exception("Database connection string is not set in the configuration.");
         options.UseMySQL(connectionString)
             .LogTo(Console.WriteLine, LogLevel.Error)
             .EnableDetailedErrors();
     });
 
-// Order Bounded Context Dependency Injection
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-
-// Configure Dependency Injection
-
-// Shared Bounded Context Dependency Injection
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// Inventory Bounded Context Dependency Injection
 builder.Services.AddScoped<ISupplyRepository, SupplyRepository>();
 builder.Services.AddScoped<ISupplyCommandService, SupplyCommandService>();
 builder.Services.AddScoped<ISupplyQueryService, SupplyQueryService>();
 
-// Orders Bounded Context Dependency Injection
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+// Registrar módulo IAM: cliente HTTP al servicio de login externo, repositorio y servicios de aplicación.
+// Configuración esperada en appsettings: "IAM:AuthBaseUrl" (base URL) y "IAM:SigninPath" (ruta signin).
+builder.Services.AddIAM(builder.Configuration);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI();
 
-// Verify Database Objects Creation
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -94,11 +86,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors("AllowAllPolicy");
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
