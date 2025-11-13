@@ -7,6 +7,6 @@ public static class CreateSupplyCommandFromResourceAssembler
 {
     public static CreateSupplyCommand ToCommandFromResource(CreateSupplyResource resource)
     {
-        return new CreateSupplyCommand(resource.SupplyName, resource.Quantity, resource.Unit, resource.Price);
+        return new CreateSupplyCommand(resource.SupplyName, resource.Quantity, resource.Unit, resource.Supplier, resource.Price, resource.Date);
     }
 }

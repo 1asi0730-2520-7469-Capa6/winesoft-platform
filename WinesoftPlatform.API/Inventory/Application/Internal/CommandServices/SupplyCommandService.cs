@@ -39,7 +39,9 @@ public class SupplyCommandService(
             command.SupplyName,
             command.Quantity,
             command.Unit,
-            command.Price
+            command.Supplier,
+            command.Price,
+            command.Date
         );
 
         try

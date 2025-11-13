@@ -36,7 +36,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<Supply>().Property(s => s.SupplyName).IsRequired();
         builder.Entity<Supply>().Property(s => s.Quantity).IsRequired();
         builder.Entity<Supply>().Property(s => s.Unit).IsRequired();
+        builder.Entity<Supply>().Property(s => s.Supplier).IsRequired();
         builder.Entity<Supply>().Property(s => s.Price).IsRequired();
+        builder.Entity<Supply>().Property(s => s.Date).IsRequired();
         
         // Apply naming convention to use snake_case for database objects
         builder.UseSnakeCaseNamingConvention();

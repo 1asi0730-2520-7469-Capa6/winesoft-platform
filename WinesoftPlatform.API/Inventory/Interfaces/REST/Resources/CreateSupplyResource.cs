@@ -4,4 +4,7 @@ public record CreateSupplyResource(
     string SupplyName,
     int Quantity,
     string Unit,
-    decimal Price);
+    string Supplier,
+    decimal Price,
+    DateTime Date
+    );
