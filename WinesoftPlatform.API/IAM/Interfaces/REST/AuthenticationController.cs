@@ -5,8 +5,8 @@ using WinesoftPlatform.API.IAM.Infrastructure.Services;
 
 namespace WinesoftPlatform.API.IAM.Interfaces.REST
 {
-    // Controlador que expone el endpoint de autenticación.
-    // Reenvía la petición de signin al servicio de autenticación externo y devuelve el token recibido.
+    // Controller that exposes the authentication endpoint.
+    // Forwards signin requests to the external authentication service and returns the received token.
     [ApiController]
     [Route("api/iam/[controller]")]
     public class AuthenticationController : ControllerBase

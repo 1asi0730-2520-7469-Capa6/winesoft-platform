@@ -69,8 +69,8 @@ builder.Services.AddScoped<ISupplyQueryService, SupplyQueryService>();
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-// Registrar módulo IAM: cliente HTTP al servicio de login externo, repositorio y servicios de aplicación.
-// Configuración esperada en appsettings: "IAM:AuthBaseUrl" (base URL) y "IAM:SigninPath" (ruta signin).
+// Register IAM module: HTTP client to external login service, repository and application services.
+// Expected configuration in appsettings: "IAM:AuthBaseUrl" (base URL) and "IAM:SigninPath" (signin path).
 builder.Services.AddIAM(builder.Configuration);
 
 var app = builder.Build();

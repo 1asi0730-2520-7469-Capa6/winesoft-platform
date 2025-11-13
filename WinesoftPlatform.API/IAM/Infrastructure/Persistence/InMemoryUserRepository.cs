@@ -6,8 +6,8 @@ using WinesoftPlatform.API.IAM.Domain.Repositories;
 
 namespace WinesoftPlatform.API.IAM.Infrastructure.Persistence
 {
-    // Repositorio en memoria para pruebas y desarrollo rápido.
-    // No utilizar en producción; sustituir por una implementación basada en EF Core o similar.
+    // In-memory repository used for development and testing.
+    // Do not use in production; replace with an EF Core or persistent implementation.
     public class InMemoryUserRepository : IUserRepository
     {
         private readonly ConcurrentDictionary<Guid, User> _store = new ConcurrentDictionary<Guid, User>();

@@ -7,10 +7,10 @@ using Microsoft.Extensions.Configuration;
 
 namespace WinesoftPlatform.API.IAM.Infrastructure.Services
 {
-    // Cliente HTTP ligero para llamar al servicio de autenticación externo.
-    // Usa IHttpClientFactory con el nombre "AuthClient" y las claves de configuración:
-    // - IAM:AuthBaseUrl  -> URL base del servicio de autenticación externo.
-    // - IAM:SigninPath   -> Ruta del endpoint de signin (por defecto "/api/auth/signin").
+    // Lightweight HTTP client to call an external authentication service.
+    // Uses IHttpClientFactory named "AuthClient" and the following configuration keys:
+    // - IAM:AuthBaseUrl -> base URL of the external authentication service.
+    // - IAM:SigninPath  -> signin endpoint path (defaults to "/api/auth/signin").
     public class AuthHttpClient
     {
         private readonly IHttpClientFactory _httpClientFactory;

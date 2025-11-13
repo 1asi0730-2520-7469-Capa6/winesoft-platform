@@ -10,10 +10,10 @@ using WinesoftPlatform.API.IAM.Infrastructure.Services;
 
 namespace WinesoftPlatform.API.IAM.Infrastructure.Extensions
 {
-    // Extensión para registrar los servicios del módulo IAM en DI.
-    // Claves de configuración útiles:
-    // - IAM:AuthBaseUrl -> URL base del servicio de autenticación externo.
-    // - IAM:SigninPath  -> Ruta del endpoint signin (opcional, por defecto /api/auth/signin).
+    // Extension to register IAM module services into DI.
+    // Useful configuration keys:
+    // - IAM:AuthBaseUrl -> base URL of the external authentication service.
+    // - IAM:SigninPath  -> signin endpoint path (optional, defaults to /api/auth/signin).
     public static class ServiceCollectionExtensions
     {
         public static IServiceCollection AddIAM(this IServiceCollection services, IConfiguration configuration)
