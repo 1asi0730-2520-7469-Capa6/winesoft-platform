@@ -10,7 +10,7 @@ using WinesoftPlatform.API.Inventory.Interfaces.REST.Transform;
 namespace WinesoftPlatform.API.Inventory.Interfaces.REST;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v1/inventory/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
 [Tags("Supplies")]
 public class SuppliesController(

@@ -7,6 +7,6 @@ public static class UpdateSupplyCommandFromResourceAssembler
 {
     public static UpdateSupplyCommand ToCommandFromResource(UpdateSupplyResource resource)
     {
-        return new UpdateSupplyCommand(resource.Id, resource.SupplyName, resource.Quantity, resource.Unit, resource.Price);
+        return new UpdateSupplyCommand(resource.Id, resource.SupplyName, resource.Quantity, resource.Unit, resource.Supplier, resource.Price, resource.Date);
     }
 }
