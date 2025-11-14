@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using WinesoftPlatform.API.Shared.Domain.Repositories;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Repositories;
@@ -12,6 +12,7 @@ using WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 using WinesoftPlatform.API.Inventory.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
 using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
+using WinesoftPlatform.API.Dashboard.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,15 @@ builder.Services.AddControllers(options =>
     options.Conventions.Add(new KebabCaseRouteNamingConvention()));
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => options.EnableAnnotations());
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "WineSoft Platform API",
+        Version = "v1",
+        Description = "API for the WineSoft inventory and order management platform.",});
+    options.EnableAnnotations();
+});
 builder.Services.AddOpenApi();
 
 if (builder.Environment.IsDevelopment())
@@ -72,6 +81,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 // Register IAM module: HTTP client to external login service, repository and application services.
 // Expected configuration in appsettings: "IAM:AuthBaseUrl" (base URL) and "IAM:SigninPath" (signin path).
 builder.Services.AddIAM(builder.Configuration);
+builder.AddDashboardContextServices();
 
 var app = builder.Build();
 
