@@ -51,10 +51,10 @@ public class OrdersController : ControllerBase
             order.Id, order.ProductId, order.Supplier, order.Quantity, order.Status, order.CreatedDate
         );
         
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = order.Id }, orderResource);
+        return Ok(orderResource);
     }
     
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:int}", Name = "GetOrderById")] 
     [SwaggerOperation("Get order by id")]
     public async Task<IActionResult> GetByIdAsync(int id)
     {
@@ -62,7 +62,7 @@ public class OrdersController : ControllerBase
         if (order == null) return NotFound();
         
         var resource = new OrderResource(
-            order.Id, order.ProductId, order.Supplier, order.Quantity, order.Status, order.CreatedDate
+            order.Id, order.ProductId, order.Supplier, order.Quantity, order.Status, order.CreatedDate 
         );
         return Ok(resource);
     }
@@ -89,7 +89,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [SwaggerOperation("Delete an order")]
+    [SwaggerOperation("Delete an existing order")]
     public async Task<IActionResult> DeleteAsync(int id)
     {
         var order = await _orderRepository.FindByIdAsync(id);
