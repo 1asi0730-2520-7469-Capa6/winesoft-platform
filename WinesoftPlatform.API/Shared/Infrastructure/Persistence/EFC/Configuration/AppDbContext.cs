@@ -9,6 +9,7 @@ namespace WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configurati
 public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Order> Orders { get; set; }
+    public DbSet<Supply> Supplies { get; set; }
     
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -32,6 +33,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<Order>().Property(o => o.UpdatedDate);
 
         // Inventory Bounded Context configurations
+        builder.Entity<Supply>().ToTable("supplies");
         builder.Entity<Supply>().HasKey(s => s.Id);
         builder.Entity<Supply>().Property(s => s.SupplyName).IsRequired();
         builder.Entity<Supply>().Property(s => s.Quantity).IsRequired();

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using WinesoftPlatform.API.Shared.Domain.Repositories;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Repositories;
@@ -11,6 +11,7 @@ using WinesoftPlatform.API.Inventory.Domain.Services;
 using WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 using WinesoftPlatform.API.Inventory.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
+using WinesoftPlatform.API.Dashboard.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,15 @@ builder.Services.AddControllers(options =>
     options.Conventions.Add(new KebabCaseRouteNamingConvention()));
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => options.EnableAnnotations());
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "WineSoft Platform API",
+        Version = "v1",
+        Description = "API for the WineSoft inventory and order management platform.",});
+    options.EnableAnnotations();
+});
 builder.Services.AddOpenApi();
 
 // Add Database Connection
@@ -78,6 +87,8 @@ builder.Services.AddScoped<ISupplyQueryService, SupplyQueryService>();
 
 // Orders Bounded Context Dependency Injection
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+builder.AddDashboardContextServices();
 
 var app = builder.Build();
 
