@@ -12,7 +12,7 @@ using WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 using WinesoftPlatform.API.Inventory.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
 using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
-using WinesoftPlatform.API.Dashboard.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using WinesoftPlatform.API.Analytics.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,7 +81,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 // Register IAM module: HTTP client to external login service, repository and application services.
 // Expected configuration in appsettings: "IAM:AuthBaseUrl" (base URL) and "IAM:SigninPath" (signin path).
 builder.Services.AddIAM(builder.Configuration);
-builder.AddDashboardContextServices();
+builder.AddAnalyticsContextServices();
 
 var app = builder.Build();
 

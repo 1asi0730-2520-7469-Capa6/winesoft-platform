@@ -1,4 +1,4 @@
-namespace WinesoftPlatform.API.Dashboard.Interfaces.REST.Resources;
+namespace WinesoftPlatform.API.Analytics.Interfaces.REST.Resources;
 
 public record CostsSummaryResource(double TotalCost, DateTime StartDate, DateTime EndDate);
 

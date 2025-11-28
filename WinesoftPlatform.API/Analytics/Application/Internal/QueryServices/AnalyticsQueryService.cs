@@ -1,19 +1,19 @@
 using Microsoft.EntityFrameworkCore;
-using WinesoftPlatform.API.Dashboard.Domain.Model.Queries;
-using WinesoftPlatform.API.Dashboard.Domain.Services;
-using WinesoftPlatform.API.Dashboard.Interfaces.REST.Resources;
+using WinesoftPlatform.API.Analytics.Domain.Model.Queries;
+using WinesoftPlatform.API.Analytics.Domain.Services;
+using WinesoftPlatform.API.Analytics.Interfaces.REST.Resources;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration;
 
-namespace WinesoftPlatform.API.Dashboard.Application.Internal.QueryServices;
+namespace WinesoftPlatform.API.Analytics.Application.Internal.QueryServices;
 
 /**
- * Implementation of the Dashboard query service.
+ * Implementation of the Analytics query service.
  */
-public class DashboardQueryService : IDashboardQueryService
+public class AnalyticsQueryService : IAnalyticsQueryService
 {
     private readonly AppDbContext _context;
 
-    public DashboardQueryService(AppDbContext context)
+    public AnalyticsQueryService(AppDbContext context)
     {
         _context = context;
     }
@@ -58,7 +58,7 @@ public class DashboardQueryService : IDashboardQueryService
         return await Task.FromResult(new List<LowStockAlertResource>().AsEnumerable());
     }
 
-    public async Task<IEnumerable<SupplyRotationResource>> HandleGetSupplyRotation(GetDashboardMetricsQuery query)
+    public async Task<IEnumerable<SupplyRotationResource>> HandleGetSupplyRotation(GetAnalyticsMetricsQuery query)
     {
         var endDate = query.EndDate ?? DateTime.UtcNow;
         var startDate = query.StartDate ?? endDate.AddDays(-7);
@@ -75,7 +75,7 @@ public class DashboardQueryService : IDashboardQueryService
             .ToListAsync();
     }
 
-    public async Task<CostsSummaryResource> HandleGetCostsSummary(GetDashboardMetricsQuery query)
+    public async Task<CostsSummaryResource> HandleGetCostsSummary(GetAnalyticsMetricsQuery query)
     {
         var endDate = query.EndDate ?? DateTime.UtcNow;
         var startDate = query.StartDate ?? endDate.AddDays(-30);

@@ -1,4 +1,4 @@
-namespace WinesoftPlatform.API.Dashboard.Interfaces.REST.Resources;
+namespace WinesoftPlatform.API.Analytics.Interfaces.REST.Resources;
 
 public record RecentOrderResource(int OrderId, 
     string Status,
