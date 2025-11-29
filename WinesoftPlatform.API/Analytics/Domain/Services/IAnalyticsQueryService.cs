@@ -3,15 +3,39 @@ using WinesoftPlatform.API.Analytics.Interfaces.REST.Resources;
 
 namespace WinesoftPlatform.API.Analytics.Domain.Services;
 
+/// <summary>
+/// Service for handling analytics queries.
+/// </summary>
 public interface IAnalyticsQueryService
 {
-    Task<IEnumerable<RecentOrderResource>> HandleGetRecentOrders();
+    /// <summary>
+    /// Handles the query to retrieve purchase orders from the last 7 days.
+    /// </summary>
+    /// <param name="query">The <see cref="GetPurchaseOrdersLast7DaysQuery"/> query to process.</param>
+    Task<IEnumerable<PurchaseOrderResource>> Handle(GetPurchaseOrdersLast7DaysQuery query);
     
+    /// <summary>
+    /// Retrieves current supply levels for all products.
+    /// </summary>
+    /// <returns>A collection of <see cref="SupplyLevelResource"/> objects.</returns>
     Task<IEnumerable<SupplyLevelResource>> HandleGetSupplyLevels();
-   
+    
+    /// <summary>
+    /// Retrieves low stock alerts for products below threshold.
+    /// </summary>
+    /// <returns>A collection of <see cref="LowStockAlertResource"/> objects.</returns>
     Task<IEnumerable<LowStockAlertResource>> HandleGetLowStockAlerts();
- 
+    /// <summary>
+    /// Retrieves supply rotation data for the specified period.
+    /// </summary>
+    /// <param name="query">The <see cref="GetAnalyticsMetricsQuery"/> with date range parameters.</param>
+    /// <returns>A collection of <see cref="SupplyRotationResource"/> objects.</returns>
     Task<IEnumerable<SupplyRotationResource>> HandleGetSupplyRotation(GetAnalyticsMetricsQuery query);
     
-    Task<CostsSummaryResource> HandleGetCostsSummary(GetAnalyticsMetricsQuery query); 
+    /// <summary>
+    /// Retrieves costs summary for the specified period.
+    /// </summary>
+    /// <param name="query">The <see cref="GetAnalyticsMetricsQuery"/> with date range parameters.</param>
+    /// <returns>A <see cref="CostsSummaryResource"/> with total costs.</returns>
+    Task<CostsSummaryResource> HandleGetCostsSummary(GetAnalyticsMetricsQuery query);
 }
