@@ -13,5 +13,6 @@ public record PurchaseOrderResource(
     string Status,
     DateTime Date,
     int ProductId,
-    int Quantity
+    int Quantity,
+    string Supplier
 );

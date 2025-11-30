@@ -28,7 +28,8 @@ public class AnalyticsQueryService(AppDbContext context) : IAnalyticsQueryServic
                 o.Status,
                 o.CreatedDate.Value.DateTime,
                 o.ProductId,
-                o.Quantity
+                o.Quantity,
+                o.Supplier
             ))
             .ToListAsync();
     }
@@ -65,8 +66,8 @@ public class AnalyticsQueryService(AppDbContext context) : IAnalyticsQueryServic
     /// <inheritdoc />
     public async Task<IEnumerable<SupplyRotationResource>> HandleGetSupplyRotation(GetAnalyticsMetricsQuery query)
     {
-        var endDate = query.EndDate ?? DateTime.UtcNow;
-        var startDate = query.StartDate ?? endDate.AddDays(-7);
+        var endDate = (query.EndDate ?? DateTime.UtcNow).Date.AddDays(1).AddTicks(-1);
+        var startDate = (query.StartDate ?? endDate.AddDays(-7)).Date;
 
         var rawSupplies = await context.Supplies
             .AsNoTracking()
@@ -88,16 +89,16 @@ public class AnalyticsQueryService(AppDbContext context) : IAnalyticsQueryServic
     /// <inheritdoc />
     public async Task<CostsSummaryResource> HandleGetCostsSummary(GetAnalyticsMetricsQuery query)
     {
-        var endDate = query.EndDate ?? DateTime.UtcNow;
-        var startDate = query.StartDate ?? endDate.AddDays(-30);
+        var endDate = (query.EndDate ?? DateTime.UtcNow).Date.AddDays(1).AddTicks(-1);
+        var startDate = (query.StartDate ?? endDate.AddDays(-30)).Date;
 
         var totalCost = await context.Orders
             .AsNoTracking()
             .Where(o => o.CreatedDate >= startDate && o.CreatedDate <= endDate)
             .Join(context.Supplies,
-                order => order.ProductId,
-                supply => supply.Id,
-                (order, supply) => new { order.Quantity, supply.Price }
+                o => o.ProductId,
+                s => s.Id,
+                (o, s) => new { o.Quantity, s.Price }
             )
             .SumAsync(x => (double)x.Quantity * (double)x.Price);
 
