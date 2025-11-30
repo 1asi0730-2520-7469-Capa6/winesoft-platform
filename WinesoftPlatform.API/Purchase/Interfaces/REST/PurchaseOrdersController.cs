@@ -1,28 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using WinesoftPlatform.API.Orders.Domain.Model.Aggregates;
-using WinesoftPlatform.API.Orders.Domain.Repositories;
-using WinesoftPlatform.API.Orders.Interfaces.REST.Resources;
+using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
+using WinesoftPlatform.API.Purchase.Domain.Repositories;
+using WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
 using WinesoftPlatform.API.Shared.Domain.Repositories;
 
-namespace WinesoftPlatform.API.Orders.Interfaces.REST;
+namespace WinesoftPlatform.API.Purchase.Interfaces.REST;
 
 [ApiController]
-[Route("/api/v1/[controller]")]
-[SwaggerTag("Create, read, update, and delete orders")]
-public class OrdersController : ControllerBase
+[Route("api/purchase")]
+[Tags("Purchase")]
+public class PurchaseOrdersController : ControllerBase
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public OrdersController(IOrderRepository orderRepository, IUnitOfWork unitOfWork)
+    public PurchaseOrdersController(IOrderRepository orderRepository, IUnitOfWork unitOfWork)
     {
         _orderRepository = orderRepository;
         _unitOfWork = unitOfWork;
     }
 
-    [HttpGet]
-    [SwaggerOperation("Get all orders")]
+    [HttpGet("get-all-orders")]
     public async Task<IEnumerable<OrderResource>> GetAllAsync()
     {
         var orders = await _orderRepository.ListAsync();
@@ -32,8 +30,17 @@ public class OrdersController : ControllerBase
         return resources;
     }
 
-    [HttpPost]
-    [SwaggerOperation("Create a new order")]
+    [HttpGet("get-order-by-day/{date}")]
+    public async Task<IEnumerable<OrderResource>> GetByDayAsync(DateTime date)
+    {
+        var orders = await _orderRepository.FindByCreatedDateAsync(date);
+        var resources = orders.Select(o => new OrderResource(
+            o.Id, o.ProductId, o.Supplier, o.Quantity, o.Status, o.CreatedDate
+        ));
+        return resources;
+    }
+
+    [HttpPost("create-order")]
     public async Task<IActionResult> CreateAsync([FromBody] CreateOrderResource resource)
     {
         var order = new Order
@@ -54,8 +61,7 @@ public class OrdersController : ControllerBase
         return Ok(orderResource);
     }
     
-    [HttpGet("{id:int}", Name = "GetOrderById")] 
-    [SwaggerOperation("Get order by id")]
+    [HttpGet("get-order-by-id/{id:int}")]
     public async Task<IActionResult> GetByIdAsync(int id)
     {
         var order = await _orderRepository.FindByIdAsync(id);
@@ -67,8 +73,7 @@ public class OrdersController : ControllerBase
         return Ok(resource);
     }
 
-    [HttpPut("{id:int}")]
-    [SwaggerOperation("Update an existing order")]
+    [HttpPut("update-order-by-id/{id:int}")]
     public async Task<IActionResult> UpdateAsync(int id, [FromBody] UpdateOrderResource resource)
     {
         var order = await _orderRepository.FindByIdAsync(id);
@@ -88,8 +93,7 @@ public class OrdersController : ControllerBase
         return Ok(updatedResource);
     }
 
-    [HttpDelete("{id:int}")]
-    [SwaggerOperation("Delete an existing order")]
+    [HttpDelete("delete-order-by-id/{id:int}")]
     public async Task<IActionResult> DeleteAsync(int id)
     {
         var order = await _orderRepository.FindByIdAsync(id);
