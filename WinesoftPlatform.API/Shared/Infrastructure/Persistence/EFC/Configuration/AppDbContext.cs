@@ -1,7 +1,7 @@
 using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
 using Microsoft.EntityFrameworkCore;
-using WinesoftPlatform.API.Orders.Domain.Model.Aggregates;
 using WinesoftPlatform.API.Inventory.Domain.Model.Aggregates;
+using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates; // Import actualizado
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 
 namespace WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration;
@@ -13,7 +13,6 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
-        // Automatically set CreatedDate and UpdatedDate for entities
         builder.AddCreatedUpdatedInterceptor();
         base.OnConfiguring(builder);
     }
@@ -22,6 +21,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         base.OnModelCreating(builder);
         
+        // Purchase Context
         builder.Entity<Order>().ToTable("orders");
         builder.Entity<Order>().HasKey(o => o.Id);
         builder.Entity<Order>().Property(o => o.Id).IsRequired().ValueGeneratedOnAdd();
@@ -32,7 +32,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<Order>().Property(o => o.CreatedDate);
         builder.Entity<Order>().Property(o => o.UpdatedDate);
 
-        // Inventory Bounded Context configurations
+        // Inventory Context
         builder.Entity<Supply>().ToTable("supplies");
         builder.Entity<Supply>().HasKey(s => s.Id);
         builder.Entity<Supply>().Property(s => s.SupplyName).IsRequired();
@@ -42,7 +42,6 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<Supply>().Property(s => s.Price).IsRequired();
         builder.Entity<Supply>().Property(s => s.Date).IsRequired();
         
-        // Apply naming convention to use snake_case for database objects
         builder.UseSnakeCaseNamingConvention();
     }
 }
