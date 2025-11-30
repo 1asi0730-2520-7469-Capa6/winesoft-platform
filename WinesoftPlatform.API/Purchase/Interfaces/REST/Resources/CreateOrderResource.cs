@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WinesoftPlatform.API.Orders.Interfaces.REST.Resources;
+namespace WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
 
-public record UpdateOrderResource(
+public record CreateOrderResource(
     [Required] int ProductId,
     [Required] string Supplier,
     [Required][Range(1, int.MaxValue)] int Quantity,
