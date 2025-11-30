@@ -19,4 +19,10 @@ public class SupplyRepository(AppDbContext context) : BaseRepository<Supply>(con
         return await Context.Set<Supply>()
             .AnyAsync(s => s.SupplyName.ToLower() == name.ToLower());
     }
+    
+    public async Task<Supply?> FindByNameAndSupplierAsync(string name, string supplier)
+    {
+        return await Context.Set<Supply>()
+            .FirstOrDefaultAsync(s => s.SupplyName.ToLower() == name.ToLower() && s.Supplier.ToLower() == supplier.ToLower());
+    }
 }
