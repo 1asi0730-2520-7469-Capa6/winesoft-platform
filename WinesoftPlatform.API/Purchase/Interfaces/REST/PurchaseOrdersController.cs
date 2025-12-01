@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using WinesoftPlatform.API.Inventory.Domain.Repositories;
 using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
 using WinesoftPlatform.API.Purchase.Domain.Repositories;
 using WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
@@ -27,7 +28,7 @@ public class PurchaseOrdersController : ControllerBase
     }
 
     [HttpGet("orders")]
-    [SwaggerOperation(Summary = "Get all orders")] // <--- Esto pone el texto al costado
+    [SwaggerOperation(Summary = "Get all orders")]
     public async Task<IEnumerable<OrderResource>> GetAllAsync()
     {
         var orders = await _orderRepository.ListAsync();
