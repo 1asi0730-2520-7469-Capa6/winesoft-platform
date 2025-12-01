@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
+using WinesoftPlatform.API.Analytics.Domain.Services;
 using WinesoftPlatform.API.Shared.Domain.Repositories;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Repositories;
@@ -14,8 +16,12 @@ using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
 using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
 using WinesoftPlatform.API.Dashboard.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using WinesoftPlatform.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using WinesoftPlatform.API.Analytics.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using WinesoftPlatform.API.Analytics.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddCors(options =>
 {
@@ -84,7 +90,10 @@ builder.AddProfilesContextServices();
 // Register IAM module: HTTP client to external login service, repository and application services.
 // Expected configuration in appsettings: "IAM:AuthBaseUrl" (base URL) and "IAM:SigninPath" (signin path).
 builder.Services.AddIAM(builder.Configuration);
-builder.AddDashboardContextServices();
+builder.AddAnalyticsContextServices();
+
+builder.Services.AddLocalization();
+builder.Services.AddScoped<IAnalyticsReportBuilder, QuestPdfAnalyticsReportBuilder>();
 
 var app = builder.Build();
 
