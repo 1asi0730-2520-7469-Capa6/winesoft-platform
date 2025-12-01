@@ -7,4 +7,5 @@ public interface ISupplyRepository : IBaseRepository<Supply>
 {
     Task<Supply?> FindByNameAsync(string name);
     Task<bool> ExistsByNameAsync(string name);
+    Task<Supply?> FindByNameAndSupplierAsync(string name, string supplier);
 }
