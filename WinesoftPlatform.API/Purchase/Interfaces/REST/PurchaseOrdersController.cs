@@ -13,11 +13,16 @@ namespace WinesoftPlatform.API.Purchase.Interfaces.REST;
 public class PurchaseOrdersController : ControllerBase
 {
     private readonly IOrderRepository _orderRepository;
+    private readonly ISupplyRepository _supplyRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public PurchaseOrdersController(IOrderRepository orderRepository, IUnitOfWork unitOfWork)
+    public PurchaseOrdersController(
+        IOrderRepository orderRepository,
+        ISupplyRepository supplyRepository,
+        IUnitOfWork unitOfWork)
     {
         _orderRepository = orderRepository;
+        _supplyRepository = supplyRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -26,9 +31,23 @@ public class PurchaseOrdersController : ControllerBase
     public async Task<IEnumerable<OrderResource>> GetAllAsync()
     {
         var orders = await _orderRepository.ListAsync();
-        var resources = orders.Select(o => new OrderResource(
-            o.Id, o.ProductId, o.Supplier, o.Quantity, o.Status, o.CreatedDate
-        ));
+        var resources = new List<OrderResource>();
+
+        foreach (var o in orders)
+        {
+            var supply = await _supplyRepository.FindByIdAsync(o.ProductId);
+
+            resources.Add(new OrderResource(
+                o.Id,
+                o.ProductId,
+                supply?.SupplyName ?? "Unknown",
+                o.Supplier,
+                o.Quantity,
+                o.Status,
+                o.CreatedDate
+            ));
+        }
+
         return resources;
     }
 
@@ -37,9 +56,23 @@ public class PurchaseOrdersController : ControllerBase
     public async Task<IEnumerable<OrderResource>> GetByDayAsync(DateTime date)
     {
         var orders = await _orderRepository.FindByCreatedDateAsync(date);
-        var resources = orders.Select(o => new OrderResource(
-            o.Id, o.ProductId, o.Supplier, o.Quantity, o.Status, o.CreatedDate
-        ));
+        var resources = new List<OrderResource>();
+
+        foreach (var order in orders)
+        {
+            var supply = await _supplyRepository.FindByIdAsync(order.ProductId);
+
+            resources.Add(new OrderResource(
+                order.Id,
+                order.ProductId,
+                supply?.SupplyName ?? "Unknown",
+                order.Supplier,
+                order.Quantity,
+                order.Status,
+                order.CreatedDate
+            ));
+        }
+
         return resources;
     }
 
@@ -58,8 +91,16 @@ public class PurchaseOrdersController : ControllerBase
         await _orderRepository.AddAsync(order);
         await _unitOfWork.CompleteAsync();
         
+        var supply = await _supplyRepository.FindByIdAsync(order.ProductId);
+
         var orderResource = new OrderResource(
-            order.Id, order.ProductId, order.Supplier, order.Quantity, order.Status, order.CreatedDate
+            order.Id,
+            order.ProductId,
+            supply?.SupplyName ?? "Unknown",
+            order.Supplier,
+            order.Quantity,
+            order.Status,
+            order.CreatedDate
         );
         
         return Ok(orderResource);
@@ -72,9 +113,18 @@ public class PurchaseOrdersController : ControllerBase
         var order = await _orderRepository.FindByIdAsync(id);
         if (order == null) return NotFound();
         
+        var supply = await _supplyRepository.FindByIdAsync(order.ProductId);
+
         var resource = new OrderResource(
-            order.Id, order.ProductId, order.Supplier, order.Quantity, order.Status, order.CreatedDate 
+            order.Id,
+            order.ProductId,
+            supply?.SupplyName ?? "Unknown",
+            order.Supplier,
+            order.Quantity,
+            order.Status,
+            order.CreatedDate
         );
+
         return Ok(resource);
     }
 
@@ -93,9 +143,18 @@ public class PurchaseOrdersController : ControllerBase
         _orderRepository.Update(order);
         await _unitOfWork.CompleteAsync();
         
+        var supply = await _supplyRepository.FindByIdAsync(order.ProductId);
+
         var updatedResource = new OrderResource(
-            order.Id, order.ProductId, order.Supplier, order.Quantity, order.Status, order.CreatedDate
+            order.Id,
+            order.ProductId,
+            supply?.SupplyName ?? "Unknown",
+            order.Supplier,
+            order.Quantity,
+            order.Status,
+            order.CreatedDate
         );
+
         return Ok(updatedResource);
     }
 
