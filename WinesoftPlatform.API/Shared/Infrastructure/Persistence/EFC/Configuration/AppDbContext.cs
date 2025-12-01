@@ -2,6 +2,7 @@ using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
 using Microsoft.EntityFrameworkCore;
 using WinesoftPlatform.API.Inventory.Domain.Model.Aggregates;
 using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates; // Import actualizado
+using WinesoftPlatform.API.Profiles.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 
 namespace WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration;
@@ -42,6 +43,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<Supply>().Property(s => s.Price).IsRequired();
         builder.Entity<Supply>().Property(s => s.Date).IsRequired();
         
+        builder.ApplyProfilesConfiguration();
+        
+        // Apply naming convention to use snake_case for database objects
         builder.UseSnakeCaseNamingConvention();
     }
 }
