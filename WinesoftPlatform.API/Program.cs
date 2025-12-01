@@ -13,7 +13,6 @@ using WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 using WinesoftPlatform.API.Inventory.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
 using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
-using WinesoftPlatform.API.Dashboard.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using WinesoftPlatform.API.Purchase.Domain.Repositories;
 using WinesoftPlatform.API.Purchase.Infrastructure.Persistence.EFC.Repositories;
 using WinesoftPlatform.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
