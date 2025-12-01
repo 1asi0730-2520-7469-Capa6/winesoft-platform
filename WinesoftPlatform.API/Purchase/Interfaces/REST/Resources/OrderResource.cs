@@ -1,4 +1,4 @@
-﻿namespace WinesoftPlatform.API.Orders.Interfaces.REST.Resources;
+﻿namespace WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
 
 public record OrderResource(
     int Id,
