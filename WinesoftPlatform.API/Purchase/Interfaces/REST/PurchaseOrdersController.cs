@@ -7,7 +7,7 @@ using WinesoftPlatform.API.Shared.Domain.Repositories;
 namespace WinesoftPlatform.API.Purchase.Interfaces.REST;
 
 [ApiController]
-[Route("api/purchase")]
+[Route("api/v1/purchase")]
 [Tags("Purchase")]
 public class PurchaseOrdersController : ControllerBase
 {
