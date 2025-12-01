@@ -13,20 +13,24 @@ public class SupplyCommandService(
 {
     public async Task<Supply?> Handle(CreateSupplyCommand command)
     {
-        var supply = await supplyRepository.FindByNameAndSupplierAsync(command.SupplyName, command.Supplier);
-        if (supply is not null)
+        var existingSupply = await supplyRepository.FindByNameAndSupplierAsync(command.SupplyName, command.Supplier);
+        if (existingSupply is not null)
             throw new Exception("Supply already exists for this supplier");
+        
+        var newSupply = new Supply(command);
+
         try
         {
-            await supplyRepository.AddAsync(supply);
+            await supplyRepository.AddAsync(newSupply);
             await unitOfWork.CompleteAsync();
+            
+            return newSupply;
         }
         catch (Exception e)
         {
             Console.WriteLine($"[CreateSupply] Error: {e.Message}");
             return null;
         }
-        return supply;
     }
 
     public async Task<Supply?> Handle(UpdateSupplyCommand command)
