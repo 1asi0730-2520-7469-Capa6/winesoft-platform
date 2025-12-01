@@ -56,10 +56,18 @@ else
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
     {
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        if (connectionString is null)
-            throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-        
+        var host = Environment.GetEnvironmentVariable("DATABASE_URL");
+        var port = Environment.GetEnvironmentVariable("DATABASE_PORT");
+        var user = Environment.GetEnvironmentVariable("DATABASE_USER");
+        var password = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+        var database = Environment.GetEnvironmentVariable("DATABASE_SCHEMA");
+
+        if (host is null || port is null || user is null || password is null || database is null)
+            throw new InvalidOperationException("One or more database environment variables are missing in production.");
+
+        var connectionString =
+            $"server={host};port={port};user={user};password={password};database={database}";
+
         options.UseMySQL(connectionString);
     });
 }
