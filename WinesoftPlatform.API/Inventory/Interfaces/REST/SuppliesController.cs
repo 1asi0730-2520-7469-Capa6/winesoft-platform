@@ -1,4 +1,5 @@
 ﻿using System.Net.Mime;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using WinesoftPlatform.API.Inventory.Domain.Model.Commands;
@@ -24,15 +25,32 @@ public class SuppliesController(
         Description = "Creates a new supply record in the system.",
         OperationId = "CreateSupply")]
     [SwaggerResponse(201, "Supply created successfully", typeof(SupplyResource))]
-    [SwaggerResponse(400, "Invalid request")]
+    [SwaggerResponse(400, "Invalid request", typeof(BadRequestResult))]
+    [SwaggerResponse(409, "Supply already exists for this supplier", typeof(ConflictResult))]
     public async Task<IActionResult> CreateSupply([FromBody] CreateSupplyResource resource)
     {
-        var command = CreateSupplyCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await supplyCommandService.Handle(command);
-        if (result is null) return BadRequest();
+        try
+        {
+            var command = CreateSupplyCommandFromResourceAssembler.ToCommandFromResource(resource);
+            var result = await supplyCommandService.Handle(command);
+            if (result is null) return BadRequest();
 
-        var supplyResource = SupplyResourceFromEntityAssembler.ToResourceFromEntity(result);
-        return CreatedAtAction(nameof(GetSupplyById), new { id = result.Id }, supplyResource);
+            var supplyResource = SupplyResourceFromEntityAssembler.ToResourceFromEntity(result);
+            return CreatedAtAction(nameof(GetSupplyById), new { id = result.Id }, supplyResource);
+        }
+
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("Supply already exists", StringComparison.OrdinalIgnoreCase))
+            {
+                return Conflict(new
+                {
+                    error = "A supply with this name and supplier already exists. Please edit the existing record."
+                });
+            }
+
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpGet]
