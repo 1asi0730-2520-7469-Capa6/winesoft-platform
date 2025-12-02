@@ -13,11 +13,8 @@ using WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 using WinesoftPlatform.API.Inventory.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
 using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
-using WinesoftPlatform.API.Purchase.Domain.Repositories;
-using WinesoftPlatform.API.Purchase.Infrastructure.Persistence.EFC.Repositories;
-using WinesoftPlatform.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
-using WinesoftPlatform.API.Analytics.Infrastructure.Interfaces.ASP.Configuration.Extensions;
-using WinesoftPlatform.API.Analytics.Infrastructure.Services;
+using WinesoftPlatform.API.Dashboard.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,10 +53,18 @@ else
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
     {
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        if (connectionString is null)
-            throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-        
+        var host = Environment.GetEnvironmentVariable("DATABASE_URL");
+        var port = Environment.GetEnvironmentVariable("DATABASE_PORT");
+        var user = Environment.GetEnvironmentVariable("DATABASE_USER");
+        var password = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+        var database = Environment.GetEnvironmentVariable("DATABASE_SCHEMA");
+
+        if (host is null || port is null || user is null || password is null || database is null)
+            throw new InvalidOperationException("One or more database environment variables are missing in production.");
+
+        var connectionString =
+            $"server={host};port={port};user={user};password={password};database={database}";
+
         options.UseMySQL(connectionString);
     });
 }
@@ -86,17 +91,31 @@ builder.Services.AddScoped<IAnalyticsReportBuilder, QuestPdfAnalyticsReportBuild
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
+    var logger = scope.ServiceProvider.GetService<ILogger<Program>>();
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+        if (dbContext is not null)
+        {
+            dbContext.Database.EnsureCreated();
+            logger?.LogInformation("Database EnsureCreated completed.");
+        }
+        else
+        {
+            logger?.LogWarning("AppDbContext not registered; skipping database initialization.");
+        }
+    }
+    catch (Exception ex)
+    {
+        // Log the error but allow the app to continue so the API can start locally without a DB.
+        logger?.LogError(ex, "Database initialization failed. The application will continue without database access.");
+    }
 }
 
 app.UseHttpsRedirection();

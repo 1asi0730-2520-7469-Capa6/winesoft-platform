@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using WinesoftPlatform.API.IAM.Application.Internal.CommandServices;
 using WinesoftPlatform.API.IAM.Application.Internal.QueryServices;
 using WinesoftPlatform.API.IAM.Application.Services;
+using WinesoftPlatform.API.IAM.Application.Internal.Services;
 using WinesoftPlatform.API.IAM.Domain.Repositories;
 using WinesoftPlatform.API.IAM.Infrastructure.Persistence;
 using WinesoftPlatform.API.IAM.Infrastructure.Services;
@@ -34,6 +35,9 @@ namespace WinesoftPlatform.API.IAM.Infrastructure.Extensions
             services.AddScoped<IUserQueryService, UserQueryService>();
 
             services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+
+            // Registrar servicio de autenticación local (registro, tokens)
+            services.AddScoped<IAuthService, AuthService>();
 
             return services;
         }

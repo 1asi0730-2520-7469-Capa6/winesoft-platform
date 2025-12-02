@@ -8,6 +8,16 @@ namespace WinesoftPlatform.API.IAM.Domain.Model
         public Guid Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        // Añadir otros campos de perfil según sea necesario (nombre, roles, etc.)
+
+        // Nuevo: hash de la contraseña (no almacenar la contraseña en texto plano)
+        public string PasswordHash { get; set; } = string.Empty;
+
+        // Nombre para mostrar
+        public string DisplayName { get; set; } = string.Empty;
+
+        // Fecha de creación
+        public DateTime CreatedAt { get; set; }
+
+        // Añadir otros campos de perfil según sea necesario (roles, etc.)
     }
 }
