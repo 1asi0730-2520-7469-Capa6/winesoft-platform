@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using WinesoftPlatform.API.Inventory.Domain.Repositories;
 using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
 using WinesoftPlatform.API.Purchase.Domain.Repositories;
 using WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
