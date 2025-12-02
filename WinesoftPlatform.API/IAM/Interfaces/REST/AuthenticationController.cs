@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using WinesoftPlatform.API.IAM.Interfaces.REST.Resources;
 using WinesoftPlatform.API.IAM.Infrastructure.Services;
 using WinesoftPlatform.API.IAM.Application.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
 
 namespace WinesoftPlatform.API.IAM.Interfaces.REST
 {
@@ -17,11 +19,15 @@ namespace WinesoftPlatform.API.IAM.Interfaces.REST
     {
         private readonly AuthHttpClient _authClient;
         private readonly IAuthService _authService;
+        private readonly ILogger<AuthenticationController> _logger;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthenticationController(AuthHttpClient authClient, IAuthService authService)
+        public AuthenticationController(AuthHttpClient authClient, IAuthService authService, ILogger<AuthenticationController> logger, IWebHostEnvironment env)
         {
             _authClient = authClient;
             _authService = authService;
+            _logger = logger;
+            _env = env;
         }
 
         [HttpPost("signin")]
@@ -61,12 +67,23 @@ namespace WinesoftPlatform.API.IAM.Interfaces.REST
             {
                 var (user, token) = await _authService.RegisterAsync(username, password, request.DisplayName);
 
+                // Set cookie with token
+                var cookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = !_env.IsDevelopment(), // allow non-secure on development
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                };
+
+                Response.Cookies.Append("ws_auth", token, cookieOptions);
+
                 var resp = new SignUpResponse
                 {
                     Id = user.Id,
                     Username = user.Username,
                     DisplayName = user.DisplayName,
-                    AccessToken = token
+                    AccessToken = null // token deliberately not returned in JSON
                 };
 
                 return CreatedAtAction(nameof(SignUp), resp);
@@ -77,7 +94,7 @@ namespace WinesoftPlatform.API.IAM.Interfaces.REST
             }
             catch (Exception ex)
             {
-                // Logging could be added here
+                _logger.LogError(ex, "Error while registering user");
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error" });
             }
         }

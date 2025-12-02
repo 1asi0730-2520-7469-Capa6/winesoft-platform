@@ -14,6 +14,7 @@ using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
 using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
 using WinesoftPlatform.API.Dashboard.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Microsoft.Extensions.Logging;
+using WinesoftPlatform.API.IAM.Infrastructure.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,8 +23,11 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAllPolicy",
         policy => policy.AllowAnyOrigin()
             .AllowAnyMethod()
-            .AllowAnyHeader());
+            .AllowAnyHeader()
+            .AllowCredentials());
 });
+
+builder.Services.AddMemoryCache();
 
 builder.Services.AddControllers(options =>
     options.Conventions.Add(new KebabCaseRouteNamingConvention()));
@@ -114,7 +118,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
+app.UseSimpleRateLimit();
 app.UseCors("AllowAllPolicy");
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+public partial class Program { }

@@ -34,7 +34,16 @@ namespace WinesoftPlatform.API.IAM.Infrastructure.Extensions
             services.AddScoped<IUserCommandService, UserCommandService>();
             services.AddScoped<IUserQueryService, UserQueryService>();
 
-            services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+            // By default use in-memory repository. If configuration enables EF, register IdentityDbContext and EF repository.
+            if (string.Equals(configuration["IAM:UseEf"], "true", StringComparison.OrdinalIgnoreCase))
+            {
+                // IdentityDbContext should be registered by the host (Program.cs) with the desired provider.
+                services.AddScoped<IUserRepository, UserRepository>();
+            }
+            else
+            {
+                services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+            }
 
             // Registrar servicio de autenticación local (registro, tokens)
             services.AddScoped<IAuthService, AuthService>();
