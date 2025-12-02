@@ -13,11 +13,8 @@ using WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 using WinesoftPlatform.API.Inventory.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
 using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
-using WinesoftPlatform.API.Purchase.Domain.Repositories;
-using WinesoftPlatform.API.Purchase.Infrastructure.Persistence.EFC.Repositories;
-using WinesoftPlatform.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
-using WinesoftPlatform.API.Analytics.Infrastructure.Interfaces.ASP.Configuration.Extensions;
-using WinesoftPlatform.API.Analytics.Infrastructure.Services;
+using WinesoftPlatform.API.Dashboard.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,8 +97,25 @@ app.UseSwaggerUI();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
+    var logger = scope.ServiceProvider.GetService<ILogger<Program>>();
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+        if (dbContext is not null)
+        {
+            dbContext.Database.EnsureCreated();
+            logger?.LogInformation("Database EnsureCreated completed.");
+        }
+        else
+        {
+            logger?.LogWarning("AppDbContext not registered; skipping database initialization.");
+        }
+    }
+    catch (Exception ex)
+    {
+        // Log the error but allow the app to continue so the API can start locally without a DB.
+        logger?.LogError(ex, "Database initialization failed. The application will continue without database access.");
+    }
 }
 
 app.UseHttpsRedirection();
