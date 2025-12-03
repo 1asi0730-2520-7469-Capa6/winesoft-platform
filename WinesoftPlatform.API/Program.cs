@@ -117,16 +117,16 @@ app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// Move CORS middleware to run before HTTPS redirection so redirect/actual responses include CORS headers
+app.UseCors("AllowLocalAndNetlify");
+
+app.UseHttpsRedirection();
+
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.EnsureCreated();
 }
-
-app.UseHttpsRedirection();
-
-// ✅ Usar la política corregida
-app.UseCors("AllowLocalAndNetlify");
 
 app.UseAuthorization();
 app.MapControllers();
