@@ -23,14 +23,27 @@ var builder = WebApplication.CreateBuilder(args);
 
 QuestPDF.Settings.License = LicenseType.Community;
 
+// -----------------------
+// CORS: Política única corregida
+// -----------------------
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllPolicy",
-        policy => policy.AllowAnyOrigin()
+    options.AddPolicy("AllowLocalAndNetlify", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "https://diabelife-frontend.netlify.app",
+                "https://diabelife-application.netlify.app"
+            )
+            .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowAnyHeader());
+            .AllowCredentials(); // Importante para cookies
+    });
 });
 
+// -----------------------
+// Controllers
+// -----------------------
 builder.Services.AddControllers(options =>
     options.Conventions.Add(new KebabCaseRouteNamingConvention()));
 
@@ -41,11 +54,15 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "WineSoft Platform API",
         Version = "v1",
-        Description = "API for the WineSoft inventory and order management platform.",});
+        Description = "API for the WineSoft inventory and order management platform.",
+    });
     options.EnableAnnotations();
 });
 builder.Services.AddOpenApi();
 
+// -----------------------
+// Database
+// -----------------------
 if (builder.Environment.IsDevelopment())
     builder.Services.AddDbContext<AppDbContext>(options => {
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -74,20 +91,17 @@ else if (builder.Environment.IsProduction())
             .EnableDetailedErrors();
     });
 
+// -----------------------
+// Dependency Injection
+// -----------------------
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
 builder.Services.AddScoped<ISupplyRepository, SupplyRepository>();
 builder.Services.AddScoped<ISupplyCommandService, SupplyCommandService>();
 builder.Services.AddScoped<ISupplyQueryService, SupplyQueryService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthCommandService, AuthCommandService>();
 builder.Services.AddScoped<IAuthQueryService, AuthQueryService>();
-
-
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 // Register IAM module: HTTP client to external login service, repository and application services.
 // Expected configuration in appsettings: "IAM:AuthBaseUrl" (base URL) and "IAM:SigninPath" (signin path).
@@ -98,6 +112,9 @@ builder.Services.AddScoped<IAnalyticsReportBuilder, QuestPdfAnalyticsReportBuild
 
 var app = builder.Build();
 
+// -----------------------
+// Middleware
+// -----------------------
 app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -109,7 +126,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAllPolicy");
+
+// ✅ Usar la política corregida
+app.UseCors("AllowLocalAndNetlify");
+
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
