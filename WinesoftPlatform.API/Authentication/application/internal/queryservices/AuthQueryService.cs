@@ -1,4 +1,3 @@
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -65,10 +64,5 @@ public class AuthQueryService : IAuthQueryService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    public Task LoginAsync(LoginRequestDto request)
-    {
-        throw new NotImplementedException();
     }
 }

@@ -12,9 +12,10 @@ using WinesoftPlatform.API.Inventory.Domain.Services;
 using WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 using WinesoftPlatform.API.Inventory.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories;
-using WinesoftPlatform.API.IAM.Infrastructure.Extensions;
 using WinesoftPlatform.API.Analytics.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using WinesoftPlatform.API.Analytics.Infrastructure.Services;
+using WinesoftPlatform.API.Authentication.application.@internal.commandservices;
+using WinesoftPlatform.API.Authentication.application.@internal.queryservices;
 using WinesoftPlatform.API.Purchase.Domain.Repositories;
 using WinesoftPlatform.API.Purchase.Infrastructure.Persistence.EFC.Repositories;
 
@@ -81,12 +82,15 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ISupplyRepository, SupplyRepository>();
 builder.Services.AddScoped<ISupplyCommandService, SupplyCommandService>();
 builder.Services.AddScoped<ISupplyQueryService, SupplyQueryService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAuthCommandService, AuthCommandService>();
+builder.Services.AddScoped<IAuthQueryService, AuthQueryService>();
+
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 // Register IAM module: HTTP client to external login service, repository and application services.
 // Expected configuration in appsettings: "IAM:AuthBaseUrl" (base URL) and "IAM:SigninPath" (signin path).
-builder.Services.AddIAM(builder.Configuration);
 builder.AddAnalyticsContextServices();
 
 builder.Services.AddLocalization();
