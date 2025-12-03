@@ -31,7 +31,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowLocalAndNetlify", policy =>
     {
         policy.WithOrigins(
-                "https://winesoft-frontend.vercel.app"
+                "https://winesoft-frontend.vercel.app",
+                "https://winesoft-platform.onrender.com"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
