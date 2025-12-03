@@ -125,7 +125,16 @@ app.UseHttpsRedirection();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
+    try
+    {
+        dbContext.Database.EnsureCreated();
+    }
+    catch (Exception ex)
+    {
+        // Log the exception but don't stop the application from starting.
+        // This helps when the DB server (MySQL) is not available during local development.
+        Console.WriteLine("Warning: could not ensure DB is created at startup. Exception: \n" + ex);
+    }
 }
 
 app.UseAuthorization();
