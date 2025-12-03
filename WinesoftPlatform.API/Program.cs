@@ -31,9 +31,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowLocalAndNetlify", policy =>
     {
         policy.WithOrigins(
-                "http://localhost:5173",
-                "https://diabelife-frontend.netlify.app",
-                "https://diabelife-application.netlify.app"
+                "http://localhost:5173"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
