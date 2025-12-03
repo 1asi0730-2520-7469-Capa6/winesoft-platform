@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WinesoftPlatform.API.Analytics.Domain.Model.Queries;
+using WinesoftPlatform.API.Analytics.Domain.Model.ValueObjects;
+using WinesoftPlatform.API.Analytics.Domain.Repositories;
 using WinesoftPlatform.API.Analytics.Domain.Services;
 using WinesoftPlatform.API.Analytics.Interfaces.REST.Resources;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration;
@@ -12,96 +14,39 @@ namespace WinesoftPlatform.API.Analytics.Application.Internal.QueryServices;
 /// <param name="context">
 /// The <see cref="AppDbContext"/> database context.
 /// </param>
-public class AnalyticsQueryService(AppDbContext context) : IAnalyticsQueryService
+public class AnalyticsQueryService(IAnalyticsRepository analyticsRepository) : IAnalyticsQueryService
 {
     /// <inheritdoc />
-    public async Task<IEnumerable<PurchaseOrderResource>> Handle(GetPurchaseOrdersLast7DaysQuery query)
+    public async Task<IEnumerable<PurchaseOrderSummary>> Handle(GetPurchaseOrdersLast7DaysQuery query)
     {
-        var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
-        
-        return await context.Orders
-            .AsNoTracking()
-            .Where(o => o.CreatedDate >= sevenDaysAgo)
-            .OrderByDescending(o => o.CreatedDate)
-            .Select(o => new PurchaseOrderResource(
-                o.Id,
-                o.Status,
-                o.CreatedDate.Value.DateTime,
-                o.ProductId,
-                o.Quantity,
-                o.Supplier
-            ))
-            .ToListAsync();
+        return await analyticsRepository.GetPurchaseOrdersLast7DaysAsync();
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SupplyLevelResource>> HandleGetSupplyLevels()
+    public async Task<IEnumerable<SupplyLevel>> Handle(GetAllSupplyLevelsQuery query)
     {
-        return await context.Supplies
-            .AsNoTracking()
-            .GroupBy(s => s.SupplyName)
-            .Select(g => new SupplyLevelResource(
-                g.Key,
-                g.Sum(s => s.Quantity)
-            ))
-            .ToListAsync();
+        return await analyticsRepository.GetSupplyLevelsAsync();
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<LowStockAlertResource>> HandleGetLowStockAlerts()
+    public async Task<IEnumerable<LowStockAlert>> Handle(GetLowStockAlertsQuery query)
     {
-        const int defaultThreshold = 30;
-
-        return await context.Supplies
-            .AsNoTracking()
-            .Where(s => s.Quantity < defaultThreshold)
-            .Select(s => new LowStockAlertResource(
-                s.SupplyName, 
-                s.Quantity, 
-                defaultThreshold
-            ))
-            .ToListAsync();
+        return await analyticsRepository.GetLowStockAlertsAsync(query.Threshold);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SupplyRotationResource>> HandleGetSupplyRotation(GetAnalyticsMetricsQuery query)
+    public async Task<IEnumerable<SupplyRotationMetric>> Handle(GetSupplyRotationQuery query)
     {
-        var endDate = (query.EndDate ?? DateTime.UtcNow).Date.AddDays(1).AddTicks(-1);
-        var startDate = (query.StartDate ?? endDate.AddDays(-7)).Date;
-
-        var rawSupplies = await context.Supplies
-            .AsNoTracking()
-            .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .ToListAsync();
-        
-        var result = rawSupplies
-            .GroupBy(s => s.Date.Date)
-            .Select(g => new SupplyRotationResource(
-                g.Key,
-                g.Count()
-            ))
-            .OrderBy(r => r.Day)
-            .ToList();
-
-        return result;
+        var endDate = query.EndDate ?? DateTime.UtcNow;
+        var startDate = query.StartDate ?? endDate.AddDays(-7);
+        return await analyticsRepository.GetSupplyRotationAsync(startDate, endDate);
     }
 
     /// <inheritdoc />
-    public async Task<CostsSummaryResource> HandleGetCostsSummary(GetAnalyticsMetricsQuery query)
+    public async Task<CostsSummary> Handle(GetInventoryKpisQuery query)
     {
-        var endDate = (query.EndDate ?? DateTime.UtcNow).Date.AddDays(1).AddTicks(-1);
-        var startDate = (query.StartDate ?? endDate.AddDays(-30)).Date;
-
-        var totalCost = await context.Orders
-            .AsNoTracking()
-            .Where(o => o.CreatedDate >= startDate && o.CreatedDate <= endDate)
-            .Join(context.Supplies,
-                o => o.ProductId,
-                s => s.Id,
-                (o, s) => new { o.Quantity, s.Price }
-            )
-            .SumAsync(x => (double)x.Quantity * (double)x.Price);
-
-        return new CostsSummaryResource(totalCost, startDate, endDate);
+        var endDate = query.EndDate ?? DateTime.UtcNow;
+        var startDate = query.StartDate ?? endDate.AddDays(-30);
+        return await analyticsRepository.GetCostsSummaryAsync(startDate, endDate);
     }
 }
