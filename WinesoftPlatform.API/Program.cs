@@ -31,7 +31,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowLocalAndNetlify", policy =>
     {
         policy.WithOrigins(
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "https://winesoft-platform.onrender.com"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
