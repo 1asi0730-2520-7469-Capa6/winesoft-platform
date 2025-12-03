@@ -1,174 +1,119 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net.Mime;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using WinesoftPlatform.API.Inventory.Domain.Repositories;
-using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
-using WinesoftPlatform.API.Purchase.Domain.Repositories;
+using WinesoftPlatform.API.Purchase.Domain.Model.Commands;
+using WinesoftPlatform.API.Purchase.Domain.Model.Queries;
+using WinesoftPlatform.API.Purchase.Domain.Services;
 using WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
-using WinesoftPlatform.API.Shared.Domain.Repositories;
+using WinesoftPlatform.API.Purchase.Interfaces.REST.Transform;
 
 namespace WinesoftPlatform.API.Purchase.Interfaces.REST;
 
+/// <summary>
+///     Controller for managing purchase orders.
+/// </summary>
+/// <param name="orderCommandService">The order command service.</param>
+/// <param name="orderQueryService">The order query service.</param>
 [ApiController]
-[Route("api/v1/purchase")]
+[Route("api/v1/purchase-orders")]
+[Produces(MediaTypeNames.Application.Json)]
 [Tags("Purchase")]
-public class PurchaseOrdersController : ControllerBase
+public class PurchaseOrdersController(
+    IOrderCommandService orderCommandService,
+    IOrderQueryService orderQueryService)
+    : ControllerBase
 {
-    private readonly IOrderRepository _orderRepository;
-    private readonly ISupplyRepository _supplyRepository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public PurchaseOrdersController(
-        IOrderRepository orderRepository,
-        ISupplyRepository supplyRepository,
-        IUnitOfWork unitOfWork)
+    /// <summary>
+    ///     Create a new order.
+    /// </summary>
+    /// <param name="resource">The order creation resource.</param>
+    /// <returns>The created order resource.</returns>
+    [HttpPost]
+    [SwaggerOperation(Summary = "Create a new order", OperationId = "CreateOrder")]
+    [SwaggerResponse(StatusCodes.Status201Created, "The order was created", typeof(OrderResource))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "The order could not be created")]
+    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderResource resource)
     {
-        _orderRepository = orderRepository;
-        _supplyRepository = supplyRepository;
-        _unitOfWork = unitOfWork;
+        var command = CreateOrderCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var order = await orderCommandService.Handle(command);
+
+        if (order is null) return BadRequest();
+
+        var orderResource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
+        return CreatedAtAction(nameof(GetOrderById), new { id = order.Id }, orderResource);
     }
 
-    [HttpGet("orders")]
-    [SwaggerOperation(Summary = "Get all orders")] // <--- Esto pone el texto al costado
-    public async Task<IEnumerable<OrderResource>> GetAllAsync()
+    /// <summary>
+    ///     Get order by ID.
+    /// </summary>
+    /// <param name="id">The order identifier.</param>
+    /// <returns>The order resource.</returns>
+    [HttpGet("{id:int}")]
+    [SwaggerOperation(Summary = "Get order by ID", OperationId = "GetOrderById")]
+    [SwaggerResponse(StatusCodes.Status200OK, "The order was found", typeof(OrderResource))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "The order was not found")]
+    public async Task<IActionResult> GetOrderById(int id)
     {
-        var orders = await _orderRepository.ListAsync();
-        var resources = new List<OrderResource>();
+        var query = new GetOrderByIdQuery(id);
+        var order = await orderQueryService.Handle(query);
 
-        foreach (var o in orders)
-        {
-            var supply = await _supplyRepository.FindByIdAsync(o.ProductId);
+        if (order is null) return NotFound();
 
-            resources.Add(new OrderResource(
-                o.Id,
-                o.ProductId,
-                supply?.SupplyName ?? "Unknown",
-                o.Supplier,
-                o.Quantity,
-                o.Status,
-                o.CreatedDate
-            ));
-        }
-
-        return resources;
-    }
-
-    [HttpGet("orders/{date}")]
-    [SwaggerOperation(Summary = "Get orders by specific date")]
-    public async Task<IEnumerable<OrderResource>> GetByDayAsync(DateTime date)
-    {
-        var orders = await _orderRepository.FindByCreatedDateAsync(date);
-        var resources = new List<OrderResource>();
-
-        foreach (var order in orders)
-        {
-            var supply = await _supplyRepository.FindByIdAsync(order.ProductId);
-
-            resources.Add(new OrderResource(
-                order.Id,
-                order.ProductId,
-                supply?.SupplyName ?? "Unknown",
-                order.Supplier,
-                order.Quantity,
-                order.Status,
-                order.CreatedDate
-            ));
-        }
-
-        return resources;
-    }
-
-    [HttpPost("orders")]
-    [SwaggerOperation(Summary = "Create a new order")]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateOrderResource resource)
-    {
-        var order = new Order
-        {
-            ProductId = resource.ProductId,
-            Supplier = resource.Supplier,
-            Quantity = resource.Quantity,
-            Status = resource.Status
-        };
-        
-        await _orderRepository.AddAsync(order);
-        await _unitOfWork.CompleteAsync();
-        
-        var supply = await _supplyRepository.FindByIdAsync(order.ProductId);
-
-        var orderResource = new OrderResource(
-            order.Id,
-            order.ProductId,
-            supply?.SupplyName ?? "Unknown",
-            order.Supplier,
-            order.Quantity,
-            order.Status,
-            order.CreatedDate
-        );
-        
-        return Ok(orderResource);
-    }
-    
-    [HttpGet("orders/{id:int}")]
-    [SwaggerOperation(Summary = "Get order by ID")]
-    public async Task<IActionResult> GetByIdAsync(int id)
-    {
-        var order = await _orderRepository.FindByIdAsync(id);
-        if (order == null) return NotFound();
-        
-        var supply = await _supplyRepository.FindByIdAsync(order.ProductId);
-
-        var resource = new OrderResource(
-            order.Id,
-            order.ProductId,
-            supply?.SupplyName ?? "Unknown",
-            order.Supplier,
-            order.Quantity,
-            order.Status,
-            order.CreatedDate
-        );
-
+        var resource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
         return Ok(resource);
     }
 
-    [HttpPut("orders/{id:int}")]
-    [SwaggerOperation(Summary = "Update an existing order")]
-    public async Task<IActionResult> UpdateAsync(int id, [FromBody] UpdateOrderResource resource)
+    /// <summary>
+    ///     Get all orders.
+    /// </summary>
+    /// <returns>A list of order resources.</returns>
+    [HttpGet]
+    [SwaggerOperation(Summary = "Get all orders", OperationId = "GetAllOrders")]
+    [SwaggerResponse(StatusCodes.Status200OK, "The list of orders", typeof(IEnumerable<OrderResource>))]
+    public async Task<IActionResult> GetAllOrders()
     {
-        var order = await _orderRepository.FindByIdAsync(id);
-        if (order == null) return NotFound();
-
-        order.ProductId = resource.ProductId;
-        order.Supplier = resource.Supplier;
-        order.Quantity = resource.Quantity;
-        order.Status = resource.Status;
-
-        _orderRepository.Update(order);
-        await _unitOfWork.CompleteAsync();
-        
-        var supply = await _supplyRepository.FindByIdAsync(order.ProductId);
-
-        var updatedResource = new OrderResource(
-            order.Id,
-            order.ProductId,
-            supply?.SupplyName ?? "Unknown",
-            order.Supplier,
-            order.Quantity,
-            order.Status,
-            order.CreatedDate
-        );
-
-        return Ok(updatedResource);
+        var query = new GetAllOrdersQuery();
+        var orders = await orderQueryService.Handle(query);
+        var resources = orders.Select(OrderResourceFromEntityAssembler.ToResourceFromEntity);
+        return Ok(resources);
     }
 
-    [HttpDelete("orders/{id:int}")]
-    [SwaggerOperation(Summary = "Delete an order")]
-    public async Task<IActionResult> DeleteAsync(int id)
+    /// <summary>
+    ///     Update an existing order.
+    /// </summary>
+    /// <param name="id">The order identifier.</param>
+    /// <param name="resource">The order update resource.</param>
+    /// <returns>The updated order resource.</returns>
+    [HttpPut("{id:int}")]
+    [SwaggerOperation(Summary = "Update an existing order", OperationId = "UpdateOrder")]
+    [SwaggerResponse(StatusCodes.Status200OK, "The order was updated", typeof(OrderResource))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "The order was not found")]
+    public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderResource resource)
     {
-        var order = await _orderRepository.FindByIdAsync(id);
-        if (order == null) return NotFound();
+        var command = UpdateOrderCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+        var order = await orderCommandService.Handle(command);
 
-        _orderRepository.Remove(order);
-        await _unitOfWork.CompleteAsync();
-        
-        return Ok(new { message = $"Order with id {id} deleted successfully." });
+        if (order is null) return NotFound();
+
+        var orderResource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
+        return Ok(orderResource);
+    }
+
+    /// <summary>
+    ///     Delete an order.
+    /// </summary>
+    /// <param name="id">The order identifier.</param>
+    /// <returns>No content.</returns>
+    [HttpDelete("{id:int}")]
+    [SwaggerOperation(Summary = "Delete an order", OperationId = "DeleteOrder")]
+    [SwaggerResponse(StatusCodes.Status204NoContent, "The order was deleted")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "The order was not found")]
+    public async Task<IActionResult> DeleteOrder(int id)
+    {
+        var command = new DeleteOrderCommand(id);
+        var result = await orderCommandService.Handle(command);
+
+        if (!result) return NotFound();
+        return NoContent();
     }
 }

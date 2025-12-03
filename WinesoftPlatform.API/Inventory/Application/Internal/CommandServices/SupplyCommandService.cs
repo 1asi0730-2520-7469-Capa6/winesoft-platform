@@ -13,20 +13,23 @@ public class SupplyCommandService(
 {
     public async Task<Supply?> Handle(CreateSupplyCommand command)
     {
-        var supply = await supplyRepository.FindByNameAndSupplierAsync(command.SupplyName, command.Supplier);
-        if (supply is not null)
+        var existingSupply = await supplyRepository.FindByNameAndSupplierAsync(command.SupplyName, command.Supplier);
+        if (existingSupply is not null)
             throw new Exception("Supply already exists for this supplier");
+        
+        var supply = new Supply(command);
+
         try
         {
             await supplyRepository.AddAsync(supply);
             await unitOfWork.CompleteAsync();
+            return supply;
         }
         catch (Exception e)
         {
             Console.WriteLine($"[CreateSupply] Error: {e.Message}");
             return null;
         }
-        return supply;
     }
 
     public async Task<Supply?> Handle(UpdateSupplyCommand command)
@@ -52,14 +55,13 @@ public class SupplyCommandService(
         {
             supplyRepository.Update(existing);
             await unitOfWork.CompleteAsync();
+            return existing;
         }
         catch (Exception e)
         {
             Console.WriteLine($"[UpdateSupply] Error: {e.Message}");
             return null;
         }
-
-        return existing;
     }
 
     public async Task<bool> Handle(DeleteSupplyCommand command)
@@ -72,13 +74,12 @@ public class SupplyCommandService(
         {
             supplyRepository.Remove(existingSupply);
             await unitOfWork.CompleteAsync();
+            return true;
         }
         catch (Exception e)
         {
             Console.WriteLine($"[Error - DeleteSupply] {e.Message}");
             return false;
         }
-
-        return true;
     }
 }
