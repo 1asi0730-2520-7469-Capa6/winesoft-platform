@@ -11,29 +11,22 @@ namespace WinesoftPlatform.API.Analytics.Interfaces.REST;
 [Route("api/v1/[controller]")]
 [Produces("application/json")]
 [SwaggerTag("Analytics endpoints for metrics and reports")]
-public class AnalyticsController : ControllerBase
+public class AnalyticsController(
+    IAnalyticsQueryService analyticsQueryService,
+    IAnalyticsCommandService analyticsCommandService) : ControllerBase
 {
-    private readonly IAnalyticsQueryService _analyticsQueryService;
-    private readonly IAnalyticsCommandService _analyticsCommandService;
-
-    public AnalyticsController(IAnalyticsQueryService analyticsQueryService,
-        IAnalyticsCommandService analyticsCommandService)
-    {
-        _analyticsQueryService = analyticsQueryService;
-        _analyticsCommandService = analyticsCommandService;
-    }
-
-    [HttpGet("purchase-orders/last-7-days")]
+    [HttpGet("last-week-purchase-orders")]
     [SwaggerOperation(
-        Summary = "Get purchase orders from last 7 days",
+        Summary = "Get purchase orders from last week",
         Description = "Retrieves all purchase orders created in the last 7 days",
         OperationId = "GetPurchaseOrdersLast7Days")]
-    [SwaggerResponse(200, "Purchase orders retrieved successfully")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Purchase orders retrieved successfully", typeof(IEnumerable<PurchaseOrderResource>))]
     public async Task<IActionResult> GetPurchaseOrdersLast7Days()
     {
         var query = new GetPurchaseOrdersLast7DaysQuery();
-        var orders = await _analyticsQueryService.Handle(query);
-        return Ok(orders);
+        var orders = await analyticsQueryService.Handle(query);
+        var resources = orders.Select(PurchaseOrderResourceFromEntityAssembler.ToResourceFromEntity);
+        return Ok(resources);
     }
 
     [HttpGet("supply-levels")]
@@ -41,11 +34,13 @@ public class AnalyticsController : ControllerBase
         Summary = "Get current supply levels",
         Description = "Retrieves current inventory levels for all supplies",
         OperationId = "GetSupplyLevels")]
-    [SwaggerResponse(200, "Supply levels retrieved successfully")]
+    [SwaggerResponse(200, "Supply levels retrieved successfully", typeof(IEnumerable<SupplyLevelResource>))]
     public async Task<IActionResult> GetSupplyLevels()
     {
-        var levels = await _analyticsQueryService.HandleGetSupplyLevels();
-        return Ok(levels);
+        var query = new GetAllSupplyLevelsQuery();
+        var levels = await analyticsQueryService.Handle(query);
+        var resources = levels.Select(SupplyLevelResourceFromEntityAssembler.ToResourceFromEntity);
+        return Ok(resources);
     }
 
     [HttpGet("low-stock-alerts")]
@@ -53,35 +48,41 @@ public class AnalyticsController : ControllerBase
         Summary = "Get low stock alerts",
         Description = "Retrieves alerts for supplies below minimum stock threshold",
         OperationId = "GetLowStockAlerts")]
-    [SwaggerResponse(200, "Low stock alerts retrieved successfully")]
+    [SwaggerResponse(200, "Low stock alerts retrieved successfully", typeof(IEnumerable<LowStockAlertResource>))]
     public async Task<IActionResult> GetLowStockAlerts()
     {
-        var alerts = await _analyticsQueryService.HandleGetLowStockAlerts();
-        return Ok(alerts);
+        var query = new GetLowStockAlertsQuery();
+        var alerts = await analyticsQueryService.Handle(query);
+        var resources = alerts.Select(LowStockAlertResourceFromEntityAssembler.ToResourceFromEntity);
+        return Ok(resources);
     }
 
-    [HttpGet("supply-rotation")]
+    [HttpGet("supply-rotation-metrics")]
     [SwaggerOperation(
-        Summary = "Get supply rotation data",
+        Summary = "Get supply rotation metrics",
         Description = "Retrieves daily supply rotation metrics for the specified date range",
         OperationId = "GetSupplyRotation")]
-    [SwaggerResponse(200, "Supply rotation data retrieved successfully")]
-    public async Task<IActionResult> GetSupplyRotation([FromQuery] GetAnalyticsMetricsQuery query)
+    [SwaggerResponse(200, "Supply rotation data retrieved successfully", typeof(IEnumerable<SupplyRotationResource>))]
+    public async Task<IActionResult> GetSupplyRotation([FromQuery] GetAnalyticsMetricsQuery metricsQuery)
     {
-        var data = await _analyticsQueryService.HandleGetSupplyRotation(query);
-        return Ok(data);
+        var query = new GetSupplyRotationQuery(metricsQuery.StartDate, metricsQuery.EndDate);
+        var data = await analyticsQueryService.Handle(query);
+        var resources = data.Select(SupplyRotationResourceFromEntityAssembler.ToResourceFromEntity);
+        return Ok(resources);
     }
 
-    [HttpGet("costs-summary")]
+    [HttpGet("inventory-kpis")]
     [SwaggerOperation(
-        Summary = "Get costs summary",
-        Description = "Retrieves total costs summary for the specified date range",
+        Summary = "Get inventory KPIs",
+        Description = "Retrieves total costs summary and other KPIs for the specified date range",
         OperationId = "GetCostsSummary")]
-    [SwaggerResponse(200, "Costs summary retrieved successfully")]
-    public async Task<IActionResult> GetCostsSummary([FromQuery] GetAnalyticsMetricsQuery query)
+    [SwaggerResponse(200, "Inventory KPIs retrieved successfully", typeof(CostsSummaryResource))]
+    public async Task<IActionResult> GetCostsSummary([FromQuery] GetAnalyticsMetricsQuery metricsQuery)
     {
-        var data = await _analyticsQueryService.HandleGetCostsSummary(query);
-        return Ok(data);
+        var query = new GetInventoryKpisQuery(metricsQuery.StartDate, metricsQuery.EndDate);
+        var data = await analyticsQueryService.Handle(query);
+        var resource = CostsSummaryResourceFromEntityAssembler.ToResourceFromEntity(data);
+        return Ok(resource);
     }
 
     [HttpPost("reports")]
@@ -97,7 +98,7 @@ public class AnalyticsController : ControllerBase
 
         try
         {
-            var pdfBytes = await _analyticsCommandService.Handle(command);
+            var pdfBytes = await analyticsCommandService.Handle(command);
 
             return File(pdfBytes, "application/pdf", $"analytics-report-{DateTime.UtcNow:yyyyMMdd}.pdf");
         }
