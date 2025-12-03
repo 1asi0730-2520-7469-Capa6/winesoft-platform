@@ -16,8 +16,8 @@ using WinesoftPlatform.API.Analytics.Infrastructure.Interfaces.ASP.Configuration
 using WinesoftPlatform.API.Analytics.Infrastructure.Services;
 using WinesoftPlatform.API.Authentication.application.@internal.commandservices;
 using WinesoftPlatform.API.Authentication.application.@internal.queryservices;
-using WinesoftPlatform.API.Purchase.Domain.Repositories;
-using WinesoftPlatform.API.Purchase.Infrastructure.Persistence.EFC.Repositories;
+// Importación del nuevo Bounded Context de Purchase
+using WinesoftPlatform.API.Purchase.Infrastructure.Interfaces.ASP.Configuration.Extensions; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,18 +94,22 @@ else if (builder.Environment.IsProduction())
 // Dependency Injection
 // -----------------------
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+// Purchase Context (Aquí estaba el problema, ahora usamos la extensión)
+builder.AddPurchaseContextServices();
+
+// Inventory Context
 builder.Services.AddScoped<ISupplyRepository, SupplyRepository>();
 builder.Services.AddScoped<ISupplyCommandService, SupplyCommandService>();
 builder.Services.AddScoped<ISupplyQueryService, SupplyQueryService>();
+
+// IAM / Auth Context
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthCommandService, AuthCommandService>();
 builder.Services.AddScoped<IAuthQueryService, AuthQueryService>();
 
-// Register IAM module: HTTP client to external login service, repository and application services.
-// Expected configuration in appsettings: "IAM:AuthBaseUrl" (base URL) and "IAM:SigninPath" (signin path).
+// Analytics Context
 builder.AddAnalyticsContextServices();
-
 builder.Services.AddLocalization();
 builder.Services.AddScoped<IAnalyticsReportBuilder, QuestPdfAnalyticsReportBuilder>();
 
